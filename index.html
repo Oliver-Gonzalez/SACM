@@ -16,89 +16,131 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       min-height: 100vh;
-      min-height: 100dvh; /* Adapts cleanly to mobile browser address bars */
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      padding: 25px 20px 15px;
-      overflow: hidden; /* Prevents scrolling caused by massive font heights */
+      padding: 10px;
+      overflow: hidden;
       /* Smooth background transition */
       transition: background-color 0.9s cubic-bezier(0.25, 1, 0.5, 1), 
                   color 0.6s ease;
-      background-color: #2e7d32;
+      background-color: #246e34;
       color: #ffffff;
       text-align: center;
+      gap: 10px;
     }
 
-    /* Top: Timer Container */
-    .timer-container {
+    /* ==========================================================
+       SCREEN-FILLING CIRCULAR DIAL CONTAINER
+       ========================================================== */
+    .dial-container {
+      position: relative;
+      width: min(98vw, 70vh, 500px);
+      height: min(98vw, 70vh, 500px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dial-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Track (background arc) */
+    .arc-track {
+      stroke: rgba(255, 255, 255, 0.35);
+      stroke-width: 10;
+      stroke-linecap: round;
+      fill: none;
+      transition: stroke 0.6s ease;
+    }
+
+    /* Active Progress (fills clockwise from bottom-left) */
+    .arc-progress {
+      stroke: #ffffff;
+      stroke-width: 10;
+      stroke-linecap: round;
+      fill: none;
+      transition: stroke 0.6s ease;
+    }
+
+    /* Target RPE Title */
+    #rpeTitle {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      opacity: 0.9;
+      white-space: nowrap;
+      transition: opacity 0.4s ease;
+    }
+
+    /* RPE Number: Dead-center in the middle of the arc */
+    #rpeDisplay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: clamp(15rem, 56vw, 22rem);
+      font-weight: 900;
+      line-height: 0.8;
+      letter-spacing: -4px;
+      margin: 0;
+    }
+
+    /* Timer & Remaining Section in Bottom Gap */
+    .timer-wrapper {
+      position: absolute;
+      top: 87%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 100%;
+      gap: 3px;
+      white-space: nowrap;
     }
-    .timer-label {
-      font-size: 0.85rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      opacity: 0.8;
-      margin-bottom: 2px;
-    }
+
+    /* Enlarged Elapsed Timer */
     #timerDisplay {
-      font-size: 3.2rem;
-      font-weight: 700;
+      font-size: clamp(2.2rem, 7.5vw, 3.1rem);
+      font-weight: 800;
       font-variant-numeric: tabular-nums;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       letter-spacing: 2px;
+      line-height: 1;
     }
 
-    /* Interval Progress Bar */
-    .progress-bar-container {
-      width: 260px;
-      max-width: 80%;
-      height: 8px;
-      background-color: rgba(255, 255, 255, 0.25);
-      border-radius: 999px;
-      margin-top: 10px;
-      overflow: hidden;
-      transition: background-color 0.4s ease;
-    }
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background-color: #ffffff;
-      border-radius: 999px;
-      transition: background-color 0.4s ease;
-    }
-
-    /* Middle: RPE / Completion Container */
-    .rpe-container {
-      display: flex;
-      flex-direction: column;
+    /* Clock Icon & Remaining Countdown */
+    #remainingDisplay {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      flex: 1; /* Takes full available middle space */
-      margin: 5px 0;
-    }
-    #rpeTitle {
-      font-size: 1.1rem;
-      font-weight: 600;
-      letter-spacing: 3px;
+      gap: 5px;
+      font-size: clamp(0.78rem, 2.7vw, 0.95rem);
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      opacity: 0.75;
       text-transform: uppercase;
-      opacity: 0.85;
-      min-height: 1.3rem;
-      transition: opacity 0.4s ease;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
-    
-    /* Doubled RPE Number Size */
-    #rpeDisplay {
-      font-size: clamp(18rem, 56vw, 28rem);
-      font-weight: 900;
-      line-height: 0.82; /* Tightened to remove vertical empty space */
-      margin: 0;
-      letter-spacing: -2px;
+
+    .clock-icon {
+      width: 1.15em;
+      height: 1.15em;
+      flex-shrink: 0;
     }
 
     /* Smooth Fade-in for Completion State */
@@ -108,50 +150,58 @@
     }
 
     #rpeDisplay.complete-text {
-      font-size: clamp(2.4rem, 8vw, 3.8rem);
+      font-size: clamp(2.4rem, 8.5vw, 4rem);
       letter-spacing: 1px;
       line-height: 1.2;
       text-transform: uppercase;
+      width: 85%;
       animation: smoothFadeIn 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
 
-    /* Bottom Section: Controls & Watermark */
+    /* ==========================================================
+       BOTTOM CONTROLS & WATERMARK
+       ========================================================== */
     .bottom-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
-      max-width: 400px;
+      max-width: 320px;
     }
+
     .button-container {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       width: 100%;
     }
+
     .btn {
       flex: 1;
-      padding: 18px 0;
-      font-size: 1.25rem;
-      font-weight: 700;
-      letter-spacing: 1px;
+      padding: 15px 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
       transition: transform 0.1s, opacity 0.2s, background-color 0.4s;
     }
+
     .btn:active {
       transform: scale(0.96);
     }
+
     .btn-start {
       background-color: #ffffff;
       color: #111111;
     }
+
     .btn-stop {
-      background-color: rgba(255, 255, 255, 0.15);
+      background-color: rgba(255, 255, 255, 0.18);
       color: #ffffff;
       backdrop-filter: blur(10px);
-      border: 2px solid rgba(255, 255, 255, 0.25);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
     }
 
     /* Watermark */
@@ -159,9 +209,9 @@
       font-size: 0.65rem;
       letter-spacing: 2px;
       text-transform: uppercase;
-      opacity: 0.35;
-      margin-top: 15px;
-      font-weight: 600;
+      opacity: 0.4;
+      margin-top: 10px;
+      font-weight: 700;
       pointer-events: none;
     }
 
@@ -169,42 +219,51 @@
     body.dark-text {
       color: #111111;
     }
-    body.dark-text .timer-label,
     body.dark-text #rpeTitle {
-      opacity: 0.7;
+      opacity: 0.8;
     }
-    body.dark-text .progress-bar-container {
-      background-color: rgba(0, 0, 0, 0.15);
+    body.dark-text .arc-track {
+      stroke: rgba(0, 0, 0, 0.2);
     }
-    body.dark-text .progress-bar-fill {
-      background-color: #111111;
+    body.dark-text .arc-progress {
+      stroke: #111111;
     }
     body.dark-text .btn-start {
       background-color: #111111;
       color: #ffffff;
     }
     body.dark-text .btn-stop {
-      background-color: rgba(0, 0, 0, 0.15);
+      background-color: rgba(0, 0, 0, 0.12);
       color: #111111;
-      border: 2px solid rgba(0, 0, 0, 0.25);
+      border: 1.5px solid rgba(0, 0, 0, 0.3);
     }
   </style>
 </head>
 <body>
 
-  <!-- Top: Timer & Interval Progress Bar -->
-  <div class="timer-container">
-    <div class="timer-label">Elapsed Time</div>
-    <div id="timerDisplay">00:00:00</div>
-    <div class="progress-bar-container">
-      <div class="progress-bar-fill" id="progressBar"></div>
-    </div>
-  </div>
+  <!-- Screen-filling Circular Dial -->
+  <div class="dial-container">
+    <svg class="dial-svg" viewBox="0 0 400 400">
+      <!-- Arc radius 180 centered exactly at (200, 200) -->
+      <path class="arc-track" d="M 66 320 A 180 180 0 1 1 334 320" />
+      <path class="arc-progress" id="progressPath" d="M 66 320 A 180 180 0 1 1 334 320" />
+    </svg>
 
-  <!-- Middle: RPE Display (Doubled Size) -->
-  <div class="rpe-container">
-    <div id="rpeTitle">Target RPE</div>
+    <div id="rpeTitle">TARGET RPE</div>
     <div id="rpeDisplay">-</div>
+
+    <!-- Grouped Timer and Remaining Countdown -->
+    <div class="timer-wrapper">
+      <div id="timerDisplay">00:00:00</div>
+      <div id="remainingDisplay">
+        <!-- Inline Vector Clock Face Icon -->
+        <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9.5"></circle>
+          <polyline points="12 6.5 12 12 15.5 14"></polyline>
+        </svg>
+        <span>REMAINING: <span id="remainingTime">00:00</span></span>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom: Controls & Watermark -->
@@ -213,17 +272,15 @@
       <button class="btn btn-start" id="startBtn">START</button>
       <button class="btn btn-stop" id="stopBtn">STOP</button>
     </div>
-    <div class="watermark">PRODUCT OF 479th FTG CRAFT</div>
+    <div class="watermark">PRODUCT OF 479TH FTG CRAFT</div>
   </div>
 
   <script>
     /* ==========================================================
        1. CONFIGURATION (Easily Editable)
        ========================================================== */
-    // The exact time when the workout automatically stops:
     const END_TIME = "02:00:00"; 
 
-    // Schedule of RPE intervals:
     const RPE_SCHEDULE = [
       { start: "00:00:00", end: "00:30:00", rpe: 3 },
       { start: "00:30:00", end: "01:00:00", rpe: 5 },
@@ -231,11 +288,67 @@
     ];
 
     /* ==========================================================
-       2. COLOR LOGIC
+       2. BELL CHIME & HAPTICS (Web Audio API)
+       ========================================================== */
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playBellSound(delaySec = 0) {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const startTime = audioCtx.currentTime + delaySec;
+      const duration = 1.3;
+
+      const harmonics = [
+        { freq: 880, gain: 0.5 },
+        { freq: 1760, gain: 0.25 },
+        { freq: 587.33, gain: 0.2 }
+      ];
+
+      harmonics.forEach(h => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(h.freq, startTime);
+
+        gain.gain.setValueAtTime(h.gain, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
+    }
+
+    function triggerTransitionAlert() {
+      if ('vibrate' in navigator) navigator.vibrate(400);
+      playBellSound(0);
+    }
+
+    function triggerCompletionAlert() {
+      if ('vibrate' in navigator) navigator.vibrate([250, 100, 250, 100, 450]);
+      playBellSound(0);
+      playBellSound(0.28);
+    }
+
+    /* ==========================================================
+       3. COLOR LOGIC
        ========================================================== */
     function getThemeForRpe(rpe) {
       if (rpe < 5) {
-        return { bg: "#2e7d32", darkText: false }; // Green
+        return { bg: "#246e34", darkText: false }; 
       } else if (rpe === 5) {
         return { bg: "#fdd835", darkText: true };  // Yellow
       } else if (rpe > 5 && rpe < 8) {
@@ -249,7 +362,7 @@
     }
 
     /* ==========================================================
-       3. TIMER CALCULATIONS & STATE
+       4. TIMER CALCULATIONS & STATE
        ========================================================== */
     function parseTimeToMs(timeStr) {
       const parts = timeStr.split(":").map(Number);
@@ -272,14 +385,20 @@
     let startTime = 0;
     let accumulatedTime = 0;
     let animationFrameId = null;
+    let lastAnnouncedRpe = null;
 
     // DOM Elements
     const timerDisplay = document.getElementById("timerDisplay");
-    const progressBar = document.getElementById("progressBar");
+    const remainingTime = document.getElementById("remainingTime");
+    const progressPath = document.getElementById("progressPath");
     const rpeTitle = document.getElementById("rpeTitle");
     const rpeDisplay = document.getElementById("rpeDisplay");
     const startBtn = document.getElementById("startBtn");
     const stopBtn = document.getElementById("stopBtn");
+
+    const pathTotalLength = progressPath.getTotalLength();
+    progressPath.style.strokeDasharray = pathTotalLength;
+    progressPath.style.strokeDashoffset = pathTotalLength;
 
     function formatTime(totalMs) {
       const mins = Math.floor(totalMs / 60000);
@@ -292,18 +411,38 @@
       return `${m}:${s}:${f}`;
     }
 
+    // Formats remaining time into SS:FF (or MM:SS:FF if minutes > 0)
+    function formatRemaining(ms) {
+      const totalSecs = Math.floor(ms / 1000);
+      const centis = Math.floor((ms % 1000) / 10);
+      const mins = Math.floor(totalSecs / 60);
+      const secs = totalSecs % 60;
+
+      const s = String(secs).padStart(2, "0");
+      const f = String(centis).padStart(2, "0");
+
+      if (mins > 0) {
+        const m = String(mins).padStart(2, "0");
+        return `${m}:${s}:${f}`;
+      }
+      return `${s}:${f}`;
+    }
+
+    function setCircularProgress(ratio) {
+      const clamped = Math.min(1, Math.max(0, ratio));
+      progressPath.style.strokeDashoffset = pathTotalLength * (1 - clamped);
+    }
+
     function renderDisplay(totalMs) {
       if (totalMs >= endTimeMs) {
         handleCompletion();
         return;
       }
 
-      // Find currently active interval
       let currentEntry = parsedSchedule.find(
         item => totalMs >= item.startMs && totalMs < item.endMs
       );
 
-      // Fallback: If past configured intervals but before END_TIME
       if (!currentEntry && parsedSchedule.length > 0) {
         if (totalMs >= parsedSchedule[parsedSchedule.length - 1].endMs) {
           const last = parsedSchedule[parsedSchedule.length - 1];
@@ -314,17 +453,24 @@
       }
 
       if (currentEntry) {
-        // Update Title & Number
-        rpeTitle.textContent = "Target RPE";
+        if (isRunning && lastAnnouncedRpe !== null && lastAnnouncedRpe !== currentEntry.rpe) {
+          triggerTransitionAlert();
+        }
+        lastAnnouncedRpe = currentEntry.rpe;
+
+        rpeTitle.textContent = "TARGET RPE";
         rpeDisplay.classList.remove("complete-text");
         rpeDisplay.textContent = currentEntry.rpe;
 
-        // Calculate and update Progress Bar for this specific interval
+        // Calculate progress and remaining time for active interval
         const intervalDuration = currentEntry.endMs - currentEntry.startMs;
-        const progress = Math.min(1, Math.max(0, (totalMs - currentEntry.startMs) / intervalDuration));
-        progressBar.style.width = (progress * 100) + "%";
+        const progress = (totalMs - currentEntry.startMs) / intervalDuration;
+        const intervalRemainingMs = Math.max(0, currentEntry.endMs - totalMs);
 
-        // Update Theme Colors
+        setCircularProgress(progress);
+        remainingTime.textContent = formatRemaining(intervalRemainingMs);
+
+        // Theme update
         const theme = getThemeForRpe(currentEntry.rpe);
         document.body.style.backgroundColor = theme.bg;
         document.body.classList.toggle("dark-text", theme.darkText);
@@ -337,12 +483,13 @@
       isCompleted = true;
       cancelAnimationFrame(animationFrameId);
 
-      // Lock displays to exact finished state
       accumulatedTime = endTimeMs;
       timerDisplay.textContent = formatTime(endTimeMs);
-      progressBar.style.width = "100%";
+      remainingTime.textContent = "00:00";
+      setCircularProgress(1.0);
 
-      // Apply End State colors & Smooth Fade-in
+      triggerCompletionAlert();
+
       document.body.style.backgroundColor = "#000000";
       document.body.classList.remove("dark-text");
       rpeTitle.textContent = ""; 
@@ -367,10 +514,12 @@
     }
 
     /* ==========================================================
-       4. BUTTON CONTROLS
+       5. BUTTON CONTROLS
        ========================================================== */
     startBtn.addEventListener("click", () => {
-      if (isCompleted) return; // Must reset after completion before starting again
+      initAudio();
+
+      if (isCompleted) return;
 
       if (!isRunning) {
         isRunning = true;
@@ -382,20 +531,21 @@
 
     stopBtn.addEventListener("click", () => {
       if (isRunning) {
-        // First STOP click: Pause
+        // Pause
         isRunning = false;
         isStopped = true;
         accumulatedTime += performance.now() - startTime;
         cancelAnimationFrame(animationFrameId);
       } else if (isStopped || isCompleted) {
-        // Second STOP click (or STOP when complete): Reset back to 00:00:00
+        // Reset
         isRunning = false;
         isStopped = false;
         isCompleted = false;
         cancelAnimationFrame(animationFrameId);
         accumulatedTime = 0;
+        lastAnnouncedRpe = parsedSchedule.length > 0 ? parsedSchedule[0].rpe : null;
         timerDisplay.textContent = "00:00:00";
-        progressBar.style.width = "0%";
+        setCircularProgress(0);
         renderDisplay(0);
       }
     });
