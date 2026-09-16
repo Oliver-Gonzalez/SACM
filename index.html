@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>RPE Workout Timer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 35px 20px 15px;
+      /* Smooth background transition */
+      transition: background-color 0.9s cubic-bezier(0.25, 1, 0.5, 1), 
+                  color 0.6s ease;
+      background-color: #2e7d32;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    /* Top: Timer Container */
+    .timer-container {
+      margin-top: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    .timer-label {
+      font-size: 0.9rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+    #timerDisplay {
+      font-size: 3.5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      letter-spacing: 2px;
+    }
+
+    /* Interval Progress Bar */
+    .progress-bar-container {
+      width: 260px;
+      max-width: 80%;
+      height: 8px;
+      background-color: rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      margin-top: 12px;
+      overflow: hidden;
+      transition: background-color 0.4s ease;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #ffffff;
+      border-radius: 999px;
+      transition: background-color 0.4s ease;
+    }
+
+    /* Middle: RPE / Completion */
+    .rpe-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 15px 0;
+      width: 100%;
+      min-height: 220px; /* Stabilizes vertical layout */
+    }
+    #rpeTitle {
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.85;
+      min-height: 1.5rem;
+      transition: opacity 0.4s ease;
+    }
+    
+    /* Large RPE Number */
+    #rpeDisplay {
+      font-size: clamp(9rem, 28vw, 14rem);
+      font-weight: 900;
+      line-height: 1;
+      margin-top: 5px;
+    }
+
+    /* Smooth Fade-in */
+    @keyframes smoothFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #rpeDisplay.complete-text {
+      font-size: clamp(2.4rem, 8vw, 3.8rem);
+      letter-spacing: 1px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      animation: smoothFadeIn 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    /* Bottom Section: Controls & Watermark */
+    .bottom-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    .button-container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+    }
+    .btn {
+      flex: 1;
+      padding: 18px 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+      transition: transform 0.1s, opacity 0.2s, background-color 0.4s;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-start {
+      background-color: #ffffff;
+      color: #111111;
+    }
+    .btn-stop {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* Watermark */
+    .watermark {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.35;
+      margin-top: 18px;
+      font-weight: 600;
+      pointer-events: none;
+    }
+
+    /* Contrast adjustments for Yellow Background */
+    body.dark-text {
+      color: #111111;
+    }
+    body.dark-text .timer-label,
+    body.dark-text #rpeTitle {
+      opacity: 0.7;
+    }
+    body.dark-text .progress-bar-container {
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+    body.dark-text .progress-bar-fill {
+      background-color: #111111;
+    }
+    body.dark-text .btn-start {
+      background-color: #111111;
+      color: #ffffff;
+    }
+    body.dark-text .btn-stop {
+      background-color: rgba(0, 0, 0, 0.15);
+      color: #111111;
+      border: 2px solid rgba(0, 0, 0, 0.25);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top: Timer & Interval Progress Bar -->
+  <div class="timer-container">
+    <div class="timer-label">Elapsed Time</div>
+    <div id="timerDisplay">00:00:00</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </div>
+
+  <!-- Middle: RPE Display -->
+  <div class="rpe-container">
+    <div id="rpeTitle">Target RPE</div>
+    <div id="rpeDisplay">-</div>
+  </div>
+
+  <!-- Bottom: Controls & Watermark -->
+  <div class="bottom-container">
+    <div class="button-container">
+      <button class="btn btn-start" id="startBtn">START</button>
+      <button class="btn btn-stop" id="stopBtn">STOP</button>
+    </div>
+    <div class="watermark">PRODUCT OF 479th FTG CRAFT</div>
+  </div>
+
+  <script>
+    /* ==========================================================
+       1. CONFIGURATION (Easily Editable)
+       ========================================================== */
+    // The exact time when the workout automatically stops:
+    const END_TIME = "02:00:00"; 
+
+    // Schedule of RPE intervals:
+    const RPE_SCHEDULE = [
+      { start: "00:00:00", end: "00:30:00", rpe: 3 },
+      { start: "00:30:00", end: "01:00:00", rpe: 5 },
+      { start: "01:00:00", end: "01:30:00", rpe: 6 },
+    ];
+
+    /* ==========================================================
+       2. COLOR LOGIC
+       ========================================================== */
+    function getThemeForRpe(rpe) {
+      if (rpe < 5) {
+        return { bg: "#2e7d32", darkText: false }; // Green
+      } else if (rpe === 5) {
+        return { bg: "#fdd835", darkText: true };  // Yellow
+      } else if (rpe > 5 && rpe < 8) {
+        return { bg: "#f57c00", darkText: false }; // Orange
+      } else if (rpe >= 8 && rpe < 10) {
+        return { bg: "#d32f2f", darkText: false }; // Red
+      } else if (rpe >= 10) {
+        return { bg: "#7b1fa2", darkText: false }; // Purple
+      }
+      return { bg: "#1f2937", darkText: false };
+    }
+
+    /* ==========================================================
+       3. TIMER CALCULATIONS & STATE
+       ========================================================== */
+    function parseTimeToMs(timeStr) {
+      const parts = timeStr.split(":").map(Number);
+      let mins = 0, secs = 0, centis = 0;
+      if (parts.length === 2) [mins, secs] = parts;
+      if (parts.length === 3) [mins, secs, centis] = parts;
+      return (mins * 60000) + (secs * 1000) + (centis * 10);
+    }
+
+    const endTimeMs = parseTimeToMs(END_TIME);
+    const parsedSchedule = RPE_SCHEDULE.map(item => ({
+      startMs: parseTimeToMs(item.start),
+      endMs: parseTimeToMs(item.end),
+      rpe: item.rpe
+    }));
+
+    let isRunning = false;
+    let isStopped = false;
+    let isCompleted = false;
+    let startTime = 0;
+    let accumulatedTime = 0;
+    let animationFrameId = null;
+
+    // DOM Elements
+    const timerDisplay = document.getElementById("timerDisplay");
+    const progressBar = document.getElementById("progressBar");
+    const rpeTitle = document.getElementById("rpeTitle");
+    const rpeDisplay = document.getElementById("rpeDisplay");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    function formatTime(totalMs) {
+      const mins = Math.floor(totalMs / 60000);
+      const secs = Math.floor((totalMs % 60000) / 1000);
+      const centis = Math.floor((totalMs % 1000) / 10);
+
+      const m = String(mins).padStart(2, "0");
+      const s = String(secs).padStart(2, "0");
+      const f = String(centis).padStart(2, "0");
+      return `${m}:${s}:${f}`;
+    }
+
+    function renderDisplay(totalMs) {
+      if (totalMs >= endTimeMs) {
+        handleCompletion();
+        return;
+      }
+
+      // Find currently active interval
+      let currentEntry = parsedSchedule.find(
+        item => totalMs >= item.startMs && totalMs < item.endMs
+      );
+
+      // Fallback: If past the configured intervals but before the END_TIME
+      if (!currentEntry && parsedSchedule.length > 0) {
+        if (totalMs >= parsedSchedule[parsedSchedule.length - 1].endMs) {
+          const last = parsedSchedule[parsedSchedule.length - 1];
+          currentEntry = { startMs: last.endMs, endMs: endTimeMs, rpe: last.rpe };
+        } else {
+          currentEntry = parsedSchedule[0];
+        }
+      }
+
+      if (currentEntry) {
+        // Update Title & Number
+        rpeTitle.textContent = "Target RPE";
+        rpeDisplay.classList.remove("complete-text");
+        rpeDisplay.textContent = currentEntry.rpe;
+
+        // Calculate and update Progress Bar for this specific interval
+        const intervalDuration = currentEntry.endMs - currentEntry.startMs;
+        const progress = Math.min(1, Math.max(0, (totalMs - currentEntry.startMs) / intervalDuration));
+        progressBar.style.width = (progress * 100) + "%";
+
+        // Update Theme Colors
+        const theme = getThemeForRpe(currentEntry.rpe);
+        document.body.style.backgroundColor = theme.bg;
+        document.body.classList.toggle("dark-text", theme.darkText);
+      }
+    }
+
+    function handleCompletion() {
+      isRunning = false;
+      isStopped = true;
+      isCompleted = true;
+      cancelAnimationFrame(animationFrameId);
+
+      // Lock displays to exact finished state
+      accumulatedTime = endTimeMs;
+      timerDisplay.textContent = formatTime(endTimeMs);
+      progressBar.style.width = "100%";
+
+      // Apply End State colors & Smooth Fade-in
+      document.body.style.backgroundColor = "#000000";
+      document.body.classList.remove("dark-text");
+      rpeTitle.textContent = ""; 
+      rpeDisplay.classList.add("complete-text");
+      rpeDisplay.textContent = "SACM Complete";
+    }
+
+    function tick() {
+      if (!isRunning) return;
+      const now = performance.now();
+      const totalMs = accumulatedTime + (now - startTime);
+
+      if (totalMs >= endTimeMs) {
+        handleCompletion();
+        return;
+      }
+
+      timerDisplay.textContent = formatTime(totalMs);
+      renderDisplay(totalMs);
+
+      animationFrameId = requestAnimationFrame(tick);
+    }
+
+    /* ==========================================================
+       4. BUTTON CONTROLS
+       ========================================================== */
+    startBtn.addEventListener("click", () => {
+      if (isCompleted) return; // Must reset after completion before starting again
+
+      if (!isRunning) {
+        isRunning = true;
+        isStopped = false;
+        startTime = performance.now();
+        animationFrameId = requestAnimationFrame(tick);
+      }
+    });
+
+    stopBtn.addEventListener("click", () => {
+      if (isRunning) {
+        // First STOP click: Pause
+        isRunning = false;
+        isStopped = true;
+        accumulatedTime += performance.now() - startTime;
+        cancelAnimationFrame(animationFrameId);
+      } else if (isStopped || isCompleted) {
+        // Second STOP click (or STOP when complete): Reset back to 00:00:00
+        isRunning = false;
+        isStopped = false;
+        isCompleted = false;
+        cancelAnimationFrame(animationFrameId);
+        accumulatedTime = 0;
+        timerDisplay.textContent = "00:00:00";
+        progressBar.style.width = "0%";
+        renderDisplay(0);
+      }
+    });
+
+    // Initialize display at 00:00:00
+    renderDisplay(0);
+  </script>
+</body>
+</html>
